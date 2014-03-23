@@ -1,15 +1,23 @@
 #!/usr/bin/env node
 
-var fs = require("fs"),
-    os = require("os"),
-    path = require("path"),
+var os = require("os"),
     child = require("child_process"),
-    readline = require("readline"),
-    https = require("https");
+    readline = require("readline");
 
-var queue = require("queue-async");
+var queue = require("queue-async"),
+    optimist = require("optimist");
 
-var argv = require("optimist").usage("Usage: \033[1mgistup\033[0m [options] -- [file …]" + os.EOL + os.EOL
+var fs = require("fs");
+
+var quote = require("../lib/gistup/quote"),
+    getSettings = require("../lib/gistup/get-settings"),
+    unless = require("../lib/gistup/unless"),
+    api = require("../lib/gistup/api"),
+    UserError = require("../lib/gistup/user-error");
+
+var crossPlatform = require("../lib/gistup/cross-platform");
+
+var argv = optimist.usage("Usage: \033[1mgistup\033[0m [options] -- [file …]" + os.EOL + os.EOL
 
 + "Version: " + require("../package.json").version + os.EOL + os.EOL
 
@@ -42,6 +50,10 @@ var argv = require("optimist").usage("Usage: \033[1mgistup\033[0m [options] -- [
       default: "https://gist.github.com/",
       describe: "URL to open in your web browser after creating gist"
     })
+    .options("repo", {
+      default: true,
+      describe: "Create a repo in the current directory"
+    })
     .options("remote", {
       default: "origin",
       describe: "name of the git remote"
@@ -55,105 +67,53 @@ var argv = require("optimist").usage("Usage: \033[1mgistup\033[0m [options] -- [
       describe: "display this useful message"
     })
     .check(function(argv) {
-      if (argv.help) throw "";
-      if (argv.private) argv.public = false;
+      if (argv.help) optimist.showHelp(), process.exit(0);
       if (argv.version) console.log(require("../package.json").version), process.exit(0);
+      if (argv.private) argv.public = false;
       if (argv.exclude === false) argv.exclude = [];
       else if (!Array.isArray(argv.exclude)) argv.exclude = [argv.exclude];
     })
     .argv;
 
-var open = process.platform === "linux" ? "xdg-open" : "open";
-
-queue(1)
+queue()
     .defer(getSettings)
-    .defer(gitInit)
-    .defer(gitRemoteDoesNotExist)
-    .defer(gitListUntrackedFiles)
-    .await(function(error, settings, _, _, files) {
-      unless(error)
-          .defer(confirmFiles, files)
-          .defer(gitAdd, files)
-          .defer(gitCommit)
-          .defer(createGist, settings.token)
-          .await(function(error, _, _, _, id) {
-            unless(error)
-                .defer(gitRemoteAdd, id)
-                .defer(gitPush)
-                .defer(openBrowser, id)
-                .await(unless);
-          });
-    });
+    .await(function (error, settings) {
+        unless(error);
 
-function unless(error) {
-  if (error) {
-    if (error.type === UserError) {
-      console.warn(os.EOL + "\033[91mERROR:\033[0m " + error.message);
-      process.exit(1);
-    }
-    throw error;
-  }
-  return queue(1);
-}
-
-function getSettings(callback) {
-  var home = process.env.HOME || process.env.HOMEPATH || process.env.USERPROFILE,
-      settingsPath = path.join(home, ".gistup.json"),
-      settings;
-
-  try {
-    settings = JSON.parse(fs.readFileSync(settingsPath, "utf8"));
-  } catch (error) {
-
-    console.log("Welcome to GISTUP!");
-    console.log("");
-    console.log("Since this is your first time using gistup, we need to create a");
-    console.log("GitHub \033[93mpersonal access token\033[0m to grant gistup permission to create");
-    console.log("gists on your behalf. You’ll only have to do this once, and you");
-    console.log("can easily revoke this token in the future if desired.");
-    console.log("");
-    console.log("When you press any key to continue, your web browser will open.");
-    console.log("Please login (if needed) and fill out the resulting form to create");
-    console.log("an access token. When you’re done, copy the access token to the");
-    console.log("clipboard and paste it back into the terminal.");
-    console.log("");
-    process.stdout.write("Press any key to open GitHub… ");
-
-    process.stdin.setRawMode(true);
-    process.stdin.resume();
-    process.stdin.once("data", function() {
-      child.exec(open + " 'https://github.com/settings/tokens/new'", function(error) {
-        if (error) {
-          argv.open = false;
-          console.log("");
-          console.log("Oops, unable to open your web browser! Please visit this URL:");
-          console.log("");
-          console.log("https://github.com/settings/tokens/new");
-          console.log("");
+        if (argv.repo) {
+            queue(1)
+                .defer(gitInit)
+                .defer(gitConfig, settings.gitConfigs)
+                .defer(gitRemoteDoesNotExist)
+                .defer(gitListUntrackedFiles)
+                .await(function(error, _, _, _, files) {
+                  unless(error)
+                      .defer(confirmFiles, files)
+                      .defer(gitAdd, files)
+                      .defer(gitCommit)
+                      .defer(createGist, settings.token, {".gistup": {"content": "gistup"}})
+                      .await(function(error, _, _, _, id) {
+                        unless(error)
+                            .defer(gitRemoteAdd, id)
+                            .defer(gitPush)
+                            .defer(openBrowser, argv.open && settings.open, id)
+                            .await(unless);
+                      });
+                });
         }
-
-        var readin = readline.createInterface({
-          input: process.stdin,
-          output: process.stdout
-        });
-
-        readin.question("Enter personal access token: ", function(token) {
-          readin.close();
-          token = token.trim().toLowerCase();
-          if (!/^[0-9a-f]{40}$/.test(token)) return void callback(new UserError("The access token \"" + token + "\" is invalid." + os.EOL + os.EOL + "Did you copy and paste the access token correctly? It should be a" + os.EOL + "forty-character hexadecimal string. Please fix and try again."));
-          settings = {token: token};
-          fs.writeFile(settingsPath, JSON.stringify(settings, null, 2), {mode: parseInt("0600", 8)}, function(error) {
-            callback(error, error ? null : settings);
-          });
-        });
-      });
-    });
-
-    return;
-  }
-
-  callback(null, settings);
-}
+        else if (!argv._.length) {
+          unless(new UserError("File list must be provided if a repo is not created"));
+        }
+        else {
+          queue(1)
+              .defer(createGistFromFileList, settings.token, argv._)
+              .await(function(error, _, id) {
+                unless(error)
+                    .defer(openBrowser, argv.open && settings.open, id)
+                    .await(unless);
+                });
+        }
+    })
 
 function gitInit(callback) {
   child.exec("git init", function(error, stdout, stderr) {
@@ -163,17 +123,30 @@ function gitInit(callback) {
   });
 }
 
+function gitConfig(gitConfigs, callback) {
+  gitConfigs.forEach(function(config){
+    console.log(config)
+    child.exec("git config " + config, function(error, stdout, stderr) {
+      if (!error && stderr) process.stderr.write(stderr), error = new Error("git config " + config + " failed.");
+      if (!error && stdout) process.stdout.write(stdout);
+      callback(error);
+    });
+  });
+  callback();
+}
+
 function gitRemoteDoesNotExist(callback) {
-  child.exec("git config --get remote." + singlequote(argv.remote) + ".url || true", function(error, stdout, stderr) {
+  child.exec('git config --get remote.' + crossPlatform.envVal('remoteName') + '.url || '+ crossPlatform.rEcho(),{ env: crossPlatform.newEnvVal('remoteName', argv.remote)}, function(error, stdout, stderr) {
     if (!error && stderr) process.stderr.write(stderr), error = new Error("git config failed.");
-    if (!error && stdout) error = new UserError("the remote \"" + argv.remote + "\" already exists." + os.EOL + os.EOL + "Are you trying to run gistup in a directory that already has a git" + os.EOL + "repository? This would overwrite your existing remote, which points to:" + os.EOL + os.EOL + "  " + stdout + os.EOL + "If you’ve previously run gistup in this directory and you want to update" + os.EOL + "your gist, just push to the existing git remote:" + os.EOL + os.EOL + "  git push" + os.EOL + os.EOL + "Or, if you don’t need this remote anymore, remove it and gistup will" + os.EOL + "replace it with a new one the next time you run it:" + os.EOL + os.EOL + "  git remote rm " + argv.remote + os.EOL + os.EOL + "Lastly, you can also specify a different remote name for gistup, so that" + os.EOL + "you can push to multiple git remotes:" + os.EOL + os.EOL + "  gistup --remote=gist" + os.EOL + os.EOL + "Please fix and try again.");
+    if (!error && stdout) error = new UserError("the remote \"" + argv.remote + "\" already exists." + os.EOL + os.EOL + "Are you trying to run gistup in a directory that already has a git" + os.EOL + "repository? This would overwrite your existing remote, which points to:" + os.EOL + os.EOL + "  " + stdout + os.EOL + "If you’ve previously run gistup in this directory and you want to update" + os.EOL + "the contents of this gist, just push to the existing git remote:" + os.EOL + os.EOL + "  git push" + os.EOL + os.EOL + "Or, if want to rename this gist:" + os.EOL + os.EOL + "  gistup-rename 'New Description'" + os.EOL + os.EOL + "If you don’t need this remote anymore (say, if you cloned someone else’s" + os.EOL + "gist), gistup will replace it with a new one if you first run:" + os.EOL + os.EOL + "  git remote rm " + argv.remote + os.EOL + os.EOL + "Lastly, you can also specify a different remote name for gistup, so that" + os.EOL + "you can push to multiple git remotes:" + os.EOL + os.EOL + "  gistup --remote=gist" + os.EOL + os.EOL + "Please do one of the above and try again.");
     callback(error);
   });
 }
 
 function gitListUntrackedFiles(callback) {
   if (argv._.length) return void callback(null, argv._);
-  child.exec("git ls-files --others --exclude-standard --directory" + argv.exclude.map(function(x) { return " -x " + singlequote(x); }) + " -x '*/'", function(error, stdout, stderr) {
+    files = argv.exclude.map(function(x) { return ' -x ' + crossPlatform.double(x); })
+    child.exec('git ls-files --others --exclude-standard --directory' + crossPlatform.envVal('files') + ' -x "*/"',{ env: crossPlatform.newEnvVal('files', files)}, function(error, stdout, stderr) {
     if (!error && stderr) process.stderr.write(stderr), error = new Error("git ls-files failed.");
     callback(error, error ? null : stdout.split(os.EOL).filter(Boolean));
   });
@@ -207,68 +180,78 @@ function confirmFiles(files, callback) {
 }
 
 function gitAdd(files, callback) {
+  if (typeof files[0] == 'function') return void callback(null);
   if (!files.length) return void callback(null);
-  child.exec("git add " + files.map(doublequote).join(" "), function(error, stdout, stderr) {
-    if (!error && stderr) process.stderr.write(stderr), error = new Error("git add failed.");
+  var fileList = files.map(crossPlatform.double).join(" ");
+  child.exec("git add " + crossPlatform.envVal('files'), { env: crossPlatform.newEnvVal('files', fileList)}, function(error, stdout, stderr) {
+      if (!error && stderr) process.stderr.write(stderr);
+      if (!error)
+      if (stderr.match(/^((warning: (LF|CRLF))(.*((\S\s)((The file).*(\S\s)).*)*(working directory\S\s)))$/g) === null){
+        if (stderr) error = new Error("git add failed.");
+      }
     if (!error && stdout) process.stdout.write(stdout);
     callback(error);
   });
 }
 
 function gitCommit(callback) {
-  child.exec("git commit --allow-empty -m 'Initial gistup commit.'", function(error, stdout, stderr) {
-    if (!error && stderr) process.stderr.write(stderr), error = new Error("git commit failed.");
+  child.exec('git commit --allow-empty -m "' + crossPlatform.envVal('msg') + '"', { env: crossPlatform.newEnvVal('msg', 'Initial gistup commit')}, function(error, stdout, stderr) {
+    if (!error && stderr) process.stderr.write(stderr);
+    if(stderr.match(/^((warning: (LF|CRLF))(.*((\S\s)((The file).*(\S\s)).*)*(working directory\S\s)))$/g) === null){
+      error = new Error("git commit failed.");
+    } else {
+      console.log(stderr);
+    }
     if (!error && stdout) process.stdout.write(stdout);
     callback(error);
   });
 }
 
-function createGist(token, callback) {
-  var json = JSON.stringify({
+function gistCreated(error, response, callback) {
+  var id = null;
+  if (!error && !/^[0-9a-f]+$/i.test(id = response.id)) error = new Error("invalid gist id: " + id); // for safety
+  if (!error) {
+      console.log("gist " + id + " created!");
+      console.log(response.html_url);
+  }
+  callback(error, id);
+}
+
+function createGist(token, fileContents, callback) {
+  api("POST", "/gists", token, {
     "description": argv.description,
     "public": argv.public,
-    "files": {
-      ".gistup": {
-        "content": "gistup"
-      }
-    }
+    "files": fileContents
+  }, function (error, response) {
+    gistCreated(error, response, callback);
   });
+}
 
-  var request = https.request({
-    hostname: "api.github.com",
-    port: 443,
-    path: "/gists",
-    method: "POST",
-    headers: {
-      "Accept": "application/vnd.github.v3+json",
-      "Authorization": "token " + token,
-      "User-Agent": "mbostock/gistup",
-      "Content-Type": "application/json;charset=utf8",
-      "Content-Length": Buffer.byteLength(json, "utf8")
-    }
-  }, function(response) {
-    var chunks = [];
-    response.setEncoding("utf8");
-    response.on("data", function(chunk) { chunks.push(chunk); });
-    response.on("end", function() {
-      var response, id = null, error;
-      try { response = JSON.parse(chunks.join("")); }
-      catch (e) { error = e; }
-      if (!error && !response) error = new Error("empty API response");
-      if (!error && !/^[0-9a-f]+$/i.test(id = response.id)) error = new Error("invalid gist id: " + id); // for safety
-      if (!error) console.log("gist " + id + " created!");
-      else console.warn(os.EOL + chunks.join(""));
-      callback(error, id);
+function createGistFromFileList(token, files, callback) {
+  var fileContents = {},
+      fileRead = queue();
+
+  files.forEach(function (filename) {
+    fileRead.defer(function (cb) {
+      fs.readFile(filename, {encoding: "utf8"}, function (error, content) {
+        if (error) {
+          return cb(error);
+        }
+        fileContents[filename] = {content: content};
+        cb();
+      });
     });
   });
 
-  request.on("error", callback);
-  request.write(json);
-  request.end();
+  fileRead.await(function (error) {
+    unless(error)
+        .defer(createGist, token, fileContents)
+        .await(unless);
+  });
 }
 
 function gitRemoteAdd(id, callback) {
-  child.exec("git remote add --track master " + singlequote(argv.remote) + " git@gist.github.com:" + id + ".git", function(error, stdout, stderr) {
+  child.exec("git remote add --track master " + crossPlatform.envVal('remoteName') + " git@gist.github.com:" + id + ".git", { env: crossPlatform.newEnvVal('remoteName', argv.remote)}, function(error, stdout, stderr) {
     if (!error && stderr) process.stderr.write(stderr), error = new Error("git remote failed.");
     if (!error && stdout) process.stdout.write(stdout);
     callback(error);
@@ -276,31 +259,17 @@ function gitRemoteAdd(id, callback) {
 }
 
 function gitPush(callback) {
-  child.exec("git push -fu " + singlequote(argv.remote) + " master", function(error, stdout, stderr) {
+  child.exec("git push -fu " + crossPlatform.envVal('remoteName') + " master", { env: crossPlatform.newEnvVal('remoteName', argv.remote)}, function(error, stdout, stderr) {
     if (!error && stderr) process.stderr.write(stderr); // ignore warnings
     if (!error && stdout) process.stdout.write(stdout);
     callback(error);
   });
 }
 
-function openBrowser(id, callback) {
-  if (!argv.open) return void callback(null);
-  child.exec(open + " " + singlequote(argv.open) + id, function(error, stdout, stderr) {
+function openBrowser(open, id, callback) {
+  if (!open) return void callback(null);
+  child.exec(open + " " + argv.open + id, function(error, stdout, stderr) {
     if (!error && stderr) process.stderr.write(stderr); // ignore errors
-    callback(null);
+    process.exit(1);
   });
-}
-
-function singlequote(string) {
-  return "'" + string.replace(/'/g, "'\\''") + "'";
-}
-
-function doublequote(string) {
-  return '"' + string.replace(/(["\s'$`\\])/g, "\\$1") + '"';
-}
-
-function UserError(message) {
-  var error = new Error(message);
-  error.type = UserError;
-  return error;
 }

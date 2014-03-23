@@ -1,8 +1,14 @@
 # Gistup
+## The Cross-platform Commandline Gist Uploader
 
-Create a gist from the command line! Then just use git to update it.
+Create and upload a Gist from the command line on Windows, Mac, and Linux! Then just use git as normal to update it.
 
-For more, read the tutorial: [Let’s Make a Block](http://bost.ocks.org/mike/block/).
+Simply goto the directory you want to upload as a Gist and type `gistup *` and your done. Just want to create an empty Gist with repository access goto to your empty directory and enter the command `gistup`. Prefer to only use a single file in a directory, say index.html just type `gistup index.html`
+
+Then you can view the results as a [Block like this](http://bl.ocks.org/mbostock) :+1:, For more information, read the tutorial: [Let’s Make a Block](http://bost.ocks.org/mike/block/) and see what you can make.
+
+This update of https://github.com/mbostock/gistup includes several enhancements include ablity to create Gists using Windows cmd.exe, Powershell, MingW, Msys2 and many other BASH based terminals inlcuding to Linux and Mac terminals. 
+
 
 ## Installation
 
@@ -26,10 +32,25 @@ If you just want to create a gist from a single file, try this instead:
 gistup index.html
 ```
 
-If you any specify options, such as a private gist, you must separate files from options with a double-dash (--) like this:
+If you specify any options, such as a private gist, you must separate files from options with a double-dash (--) like this:
 
 ```bash
-gistup --private -- index.html
+gistup --private -- index.html index2.html
+```
+
+Or specify the files prior to any options such as
+
+```bash
+gistup index.html index2.html --private
+```
+
+Additionally, wildcards are accepted to get all files in a directory:
+```bash
+gistup *
+```
+
+```bash
+gistup -- *
 ```
 
 If you want to update your gist later, just use git:
@@ -51,8 +72,37 @@ Arguments:
 * --open [url] - specify the URL to open after creating the gist
 * --no-open - don’t open the created gist in your web browser when done
 * --remote - specify the name of the git remote
+* --repo - specify that a repo should be created in the current directory
 * --help - show some help
 * --version - print the current version of gistup
+
+Gistup comes bundled with two helper programs: `gistup-rename` and `gistup-open`. Use `gistup-rename "description of gist"` to update the description of the gist in the current directory and `gistup-open` to open it for viewing in your default browser.
+
+## Git config
+
+Gistup will allow you to apply Git configuration options to your Gist as desired. Configuration option will be applied when provided as exampled in the .gistup.json file located in your home directory after your first run it should be auto generated after you provide the *personal access token*.
+
+```json
+{
+  "token": "X1x0X1x0X1x0X1x0X1x0X1x0X1x0X1x0X1x0X1x0",
+  "open": "xdg-open",
+  "gitConfigs": []
+}
+```
+
+### Example Configuration
+For example this would apply `color.ui false` and `core.autocrlf false` to your Gists.
+```json
+{
+  "token": "X1x0X1x0X1x0X1x0X1x0X1x0X1x0X1x0X1x0X1x0",
+  "open": "open",
+  "gitConfigs": [
+    "color.ui false",
+    "core.autocrlf false"
+  ]
+}
+```
+The `open` setting should be set to `xdg-open`, `open`,  or `start` depending on your OS (Linux), (Mac | Linux), (Win) respectively.  
 
 ## Troubleshooting
 
@@ -71,7 +121,7 @@ If you’re unable to follow the first-time setup to create a personal access to
 
 ```json
 {
-  "token": "0123456789012345678901234567890123456789"
+  "token": "X1x0X1x0X1x0X1x0X1x0X1x0X1x0X1x0X1x0X1x0"
 }
 ```
 
