@@ -1,7 +1,7 @@
 {
-  "name": "gistup",
+  "name": "gistup-norepo",
   "version": "0.1.2",
-  "description": "Initialize a gist from the command-line.",
+  "description": "Initialize a gist from the command-line, optionally creating a repo",
   "keywords": [
     "gist",
     "github",
@@ -11,9 +11,14 @@
     "name": "Mike Bostock",
     "url": "http://bost.ocks.org/mike"
   },
+  "contributors": [{
+      "name": "Andrew Crites",
+      "email": "ajcrites@gmail.com>",
+      "url": "http://explosion-pills.com/"
+  }],
   "repository": {
     "type": "git",
-    "url": "https://github.com/mbostock/gistup.git"
+    "url": "https://github.com/ajcrites/gistup.git"
   },
   "dependencies": {
     "optimist": "0.3",
