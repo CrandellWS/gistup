@@ -7,6 +7,8 @@ var os = require("os"),
 var queue = require("queue-async"),
     optimist = require("optimist");
 
+var fs = require("fs");
+
 var quote = require("../lib/gistup/quote"),
     getSettings = require("../lib/gistup/get-settings"),
     unless = require("../lib/gistup/unless"),
@@ -46,6 +48,10 @@ var argv = optimist.usage("Usage: \033[1mgistup\033[0m [options] -- [file …]" 
       default: "https://gist.github.com/",
       describe: "URL to open in your web browser after creating gist"
     })
+    .options("repo", {
+      default: true,
+      describe: "Create a repo in the current directory"
+    })
     .options("remote", {
       default: "origin",
       describe: "name of the git remote"
@@ -67,25 +73,44 @@ var argv = optimist.usage("Usage: \033[1mgistup\033[0m [options] -- [file …]" 
     })
     .argv;
 
-queue(1)
+queue()
     .defer(getSettings)
-    .defer(gitInit)
-    .defer(gitRemoteDoesNotExist)
-    .defer(gitListUntrackedFiles)
-    .await(function(error, settings, _, _, files) {
-      unless(error)
-          .defer(confirmFiles, files)
-          .defer(gitAdd, files)
-          .defer(gitCommit)
-          .defer(createGist, settings.token)
-          .await(function(error, _, _, _, id) {
-            unless(error)
-                .defer(gitRemoteAdd, id)
-                .defer(gitPush)
-                .defer(openBrowser, argv.open && settings.open, id)
-                .await(unless);
-          });
-    });
+    .await(function (error, settings) {
+        unless(error);
+
+        if (argv.repo && settings.repo) {
+            queue(1)
+                .defer(gitInit)
+                .defer(gitRemoteDoesNotExist)
+                .defer(gitListUntrackedFiles)
+                .await(function(error, _, _, files) {
+                  unless(error)
+                      .defer(confirmFiles, files)
+                      .defer(gitAdd, files)
+                      .defer(gitCommit)
+                      .defer(createGist, settings.token, {".gistup": {"content": "gistup"}})
+                      .await(function(error, _, _, _, id) {
+                        unless(error)
+                            .defer(gitRemoteAdd, id)
+                            .defer(gitPush)
+                            .defer(openBrowser, argv.open && settings.open, id)
+                            .await(unless);
+                      });
+                });
+        }
+        else if (!argv._.length) {
+          unless(new UserError("File list must be provided if a repo is not created"));
+        }
+        else {
+          queue(1)
+              .defer(createGistFromFileList, settings.token, argv._)
+              .await(function(error, _, id) {
+                unless(error)
+                    .defer(openBrowser, argv.open && settings.open, id)
+                    .await(unless);
+                });
+        }
+    })
 
 function gitInit(callback) {
   child.exec("git init", function(error, stdout, stderr) {
@@ -155,23 +180,46 @@ function gitCommit(callback) {
   });
 }
 
-function createGist(token, callback) {
+function gistCreated(error, response, callback) {
+  var id = null;
+  if (!error && !/^[0-9a-f]+$/i.test(id = response.id)) error = new Error("invalid gist id: " + id); // for safety
+  if (!error) {
+      console.log("gist " + id + " created!");
+      console.log(response.html_url);
+  }
+  callback(error, id);
+}
+
+function createGist(token, fileContents, callback) {
   api("POST", "/gists", token, {
     "description": argv.description,
     "public": argv.public,
-    "files": {
-      ".gistup": {
-        "content": "gistup"
-      }
-    }
-  }, function(error, response) {
-    var id = null;
-    if (!error && !/^[0-9a-f]+$/i.test(id = response.id)) error = new Error("invalid gist id: " + id); // for safety
-    if (!error) {
-      console.log("gist " + id + " created!");
-      console.log(response.html_url);
-    }
-    callback(error, id);
+    "files": fileContents
+  }, function (error, response) {
+    gistCreated(error, response, callback);
+  });
+}
+
+function createGistFromFileList(token, files, callback) {
+  var fileContents = {},
+      fileRead = queue();
+
+  files.forEach(function (filename) {
+    fileRead.defer(function (cb) {
+      fs.readFile(filename, {encoding: "utf8"}, function (error, content) {
+        if (error) {
+          return cb(error);
+        }
+        fileContents[filename] = {content: content};
+        cb();
+      });
+    });
+  });
+
+  fileRead.await(function (error) {
+    unless(error)
+        .defer(createGist, token, fileContents)
+        .await(unless);
   });
 }
 
