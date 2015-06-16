@@ -4,10 +4,12 @@ Create a gist from the command line! Then just use git to update it.
 
 For more, read the tutorial: [Let’s Make a Block](http://bost.ocks.org/mike/block/).
 
+This is a fork of the [original repository](https://github.com/mbostock/gistup) that includes an option to *not* create a repository in the current directory.
+
 ## Installation
 
 ```bash
-npm install -g gistup
+npm install -g gistup-norepo
 ```
 
 The first time you run gistup, you’ll be prompted to create a GitHub *personal access token*. You can revoke the token in the future from your GitHub [application settings](https://github.com/settings/applications).
@@ -51,6 +53,7 @@ Arguments:
 * --open [url] - specify the URL to open after creating the gist
 * --no-open - don’t open the created gist in your web browser when done
 * --remote - specify the name of the git remote
+* --repo - specify that a repo should be created in the current directory
 * --help - show some help
 * --version - print the current version of gistup
 
