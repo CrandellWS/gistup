@@ -150,12 +150,10 @@ function gitAdd(files, callback) {
 }
 
 function gitCommit(callback) {
-  child.exec("git commit --allow-empty -m "+ crossPlatform.envVal('msg'),
-    crossPlatform.newEnvVal('msg', 'Initial gistup commit'),
-    function(error, stdout, stderr) {
-      if (!error && stderr) process.stderr.write(stderr), error = new Error("git commit failed.");
-      if (!error && stdout) process.stdout.write(stdout);
-      callback(error);
+  child.exec('git commit --allow-empty -m "' + crossPlatform.envVal('msg')+'"', { env: crossPlatform.newEnvVal('msg', 'Initial gistup commit')}, function(error, stdout, stderr) {
+    if (!error && stderr) process.stderr.write(stderr), error = new Error("git commit failed.");
+    if (!error && stdout) process.stdout.write(stdout);
+    callback(error);
   });
 }
 
@@ -180,7 +178,8 @@ function createGist(token, callback) {
 }
 
 function gitRemoteAdd(id, callback) {
-  child.exec("git remote add --track master " + quote.single(argv.remote) + " git@gist.github.com:" + id + ".git", function(error, stdout, stderr) {
+  console.log(argv.remote);
+  child.exec("git remote add --track master " + crossPlatform.envVal('remoteName') + " git@gist.github.com:" + id + ".git", { env: crossPlatform.newEnvVal('remoteName', argv.remote)}, function(error, stdout, stderr) {
     if (!error && stderr) process.stderr.write(stderr), error = new Error("git remote failed.");
     if (!error && stdout) process.stdout.write(stdout);
     callback(error);
@@ -188,7 +187,7 @@ function gitRemoteAdd(id, callback) {
 }
 
 function gitPush(callback) {
-  child.exec("git push -fu " + quote.single(argv.remote) + " master", function(error, stdout, stderr) {
+  child.exec("git push -fu " + crossPlatform.envVal('remoteName') + " master", { env: crossPlatform.newEnvVal('remoteName', argv.remote)}, function(error, stdout, stderr) {
     if (!error && stderr) process.stderr.write(stderr); // ignore warnings
     if (!error && stdout) process.stdout.write(stdout);
     callback(error);
