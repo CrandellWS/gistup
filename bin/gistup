@@ -13,6 +13,8 @@ var quote = require("../lib/gistup/quote"),
     api = require("../lib/gistup/api"),
     UserError = require("../lib/gistup/user-error");
 
+var crossPlatform = require("../lib/gistup/cross-platform");
+
 var argv = optimist.usage("Usage: \033[1mgistup\033[0m [options] -- [file …]" + os.EOL + os.EOL
 
 + "Version: " + require("../package.json").version + os.EOL + os.EOL
@@ -148,10 +150,12 @@ function gitAdd(files, callback) {
 }
 
 function gitCommit(callback) {
-  child.exec("git commit --allow-empty -m 'Initial_gistup_commit'", function(error, stdout, stderr) {
-    if (!error && stderr) process.stderr.write(stderr), error = new Error("git commit failed.");
-    if (!error && stdout) process.stdout.write(stdout);
-    callback(error);
+  child.exec("git commit --allow-empty -m "+ crossPlatform.envVal('msg'),
+    crossPlatform.newEnvVal('msg', 'Initial gistup commit'),
+    function(error, stdout, stderr) {
+      if (!error && stderr) process.stderr.write(stderr), error = new Error("git commit failed.");
+      if (!error && stdout) process.stdout.write(stdout);
+      callback(error);
   });
 }
 
