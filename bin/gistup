@@ -178,7 +178,6 @@ function createGist(token, callback) {
 }
 
 function gitRemoteAdd(id, callback) {
-  console.log(argv.remote);
   child.exec("git remote add --track master " + crossPlatform.envVal('remoteName') + " git@gist.github.com:" + id + ".git", { env: crossPlatform.newEnvVal('remoteName', argv.remote)}, function(error, stdout, stderr) {
     if (!error && stderr) process.stderr.write(stderr), error = new Error("git remote failed.");
     if (!error && stdout) process.stdout.write(stdout);
