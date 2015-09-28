@@ -1,6 +1,6 @@
 {
   "name": "gistup-npc",
-  "version": "0.1.4",
+  "version": "0.1.5",
   "description": "Initialize a gist from the command-line, optionally creating a repo",
   "keywords": [
     "gist",
@@ -11,15 +11,18 @@
     "name": "Mike Bostock",
     "url": "http://bost.ocks.org/mike"
   },
-  "contributors": [{
+  "contributors": [
+    {
       "name": "Andrew Crites",
       "email": "ajcrites@gmail.com>",
       "url": "http://explosion-pills.com/"
-  },{
+    },
+    {
       "name": "William Crandell",
       "email": "william@crandell.ws>",
       "url": "http://Crandell.WS/"
-  }],
+    }
+  ],
   "repository": {
     "type": "git",
     "url": "https://github.com/CrandellWS/gistup.git"

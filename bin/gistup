@@ -80,7 +80,7 @@ queue()
     .await(function (error, settings) {
         unless(error);
 
-        if (argv.repo && settings.repo) {
+        if (argv.repo) {
             queue(1)
                 .defer(gitInit)
                 .defer(gitRemoteDoesNotExist)
