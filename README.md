@@ -9,7 +9,7 @@ This is a fork of the [original repository](https://github.com/mbostock/gistup) 
 ## Installation
 
 ```bash
-npm install -g gistup-norepo
+npm install -g gistup
 ```
 
 The first time you run gistup, you’ll be prompted to create a GitHub *personal access token*. You can revoke the token in the future from your GitHub [application settings](https://github.com/settings/applications).
