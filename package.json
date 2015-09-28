@@ -1,6 +1,6 @@
 {
   "name": "gistup-npc",
-  "version": "0.1.6",
+  "version": "0.1.7",
   "description": "Initialize a gist from the command-line, optionally creating a repo",
   "keywords": [
     "gist",
