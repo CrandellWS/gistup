@@ -83,6 +83,7 @@ queue()
         if (argv.repo) {
             queue(1)
                 .defer(gitInit)
+                .defer(gitWin)
                 .defer(gitRemoteDoesNotExist)
                 .defer(gitListUntrackedFiles)
                 .await(function(error, _, _, files) {
@@ -105,7 +106,6 @@ queue()
         }
         else {
           queue(1)
-              .defer(gitWin)
               .defer(createGistFromFileList, settings.token, argv._)
               .await(function(error, _, id) {
                 unless(error)
@@ -135,7 +135,7 @@ function gitWin(callback) {
 }
 
 function gitRemoteDoesNotExist(callback) {
-  child.exec('git commit --allow-empty -m "' + crossPlatform.envVal('msg')+'"', { env: crossPlatform.newEnvVal('msg', 'Initial gistup commit')}, function(error, stdout, stderr) {
+  child.exec('git config --get remote.' + crossPlatform.envVal('remoteName') + '.url || '+ crossPlatform.rEcho(),{ env: crossPlatform.newEnvVal('remoteName', argv.remote)}, function(error, stdout, stderr) {
     if (!error && stderr) process.stderr.write(stderr), error = new Error("git config failed.");
     if (!error && stdout) error = new UserError("the remote \"" + argv.remote + "\" already exists." + os.EOL + os.EOL + "Are you trying to run gistup in a directory that already has a git" + os.EOL + "repository? This would overwrite your existing remote, which points to:" + os.EOL + os.EOL + "  " + stdout + os.EOL + "If you’ve previously run gistup in this directory and you want to update" + os.EOL + "the contents of this gist, just push to the existing git remote:" + os.EOL + os.EOL + "  git push" + os.EOL + os.EOL + "Or, if want to rename this gist:" + os.EOL + os.EOL + "  gistup-rename 'New Description'" + os.EOL + os.EOL + "If you don’t need this remote anymore (say, if you cloned someone else’s" + os.EOL + "gist), gistup will replace it with a new one if you first run:" + os.EOL + os.EOL + "  git remote rm " + argv.remote + os.EOL + os.EOL + "Lastly, you can also specify a different remote name for gistup, so that" + os.EOL + "you can push to multiple git remotes:" + os.EOL + os.EOL + "  gistup --remote=gist" + os.EOL + os.EOL + "Please do one of the above and try again.");
     callback(error);
