@@ -167,16 +167,20 @@ function confirmFiles(files, callback) {
 
 function gitAdd(files, callback) {
   if (!files.length) return void callback(null);
-  child.exec("git add " + files.map(quote.double).join(" "), function(error, stdout, stderr) {
-    if (!error && stderr) process.stderr.write(stderr), error = new Error("git add failed.");
+  var fileList = files.join(" ");
+  console.log(fileList);
+  child.exec("git add " + crossPlatform.envVal('msg'), { env: crossPlatform.newEnvVal('msg', fileList)}, function(error, stdout, stderr) {
+    console.log(stderr)
+    // if (!error && stderr) process.stderr.write(stderr), error = new Error("git add failed.");
     if (!error && stdout) process.stdout.write(stdout);
     callback(error);
   });
 }
 
 function gitCommit(callback) {
-  child.exec('git commit --allow-empty -m "' + crossPlatform.envVal('msg')+'"', { env: crossPlatform.newEnvVal('msg', 'Initial gistup commit')}, function(error, stdout, stderr) {
-    if (!error && stderr) process.stderr.write(stderr), error = new Error("git commit failed.");
+  child.exec('git commit --allow-empty -m "' + crossPlatform.envVal('msg') + '"', { env: crossPlatform.newEnvVal('msg', 'Initial gistup commit')}, function(error, stdout, stderr) {
+    console.log(stderr)
+    // if (!error && stderr) process.stderr.write(stderr), error = new Error("git commit failed.");
     if (!error && stdout) process.stdout.write(stdout);
     callback(error);
   });
