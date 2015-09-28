@@ -178,7 +178,7 @@ function confirmFiles(files, callback) {
 }
 
 function gitAdd(files, callback) {
-  if (typeof files[0] == 'undefined') return void callback(null);
+  if (typeof files[0] == 'function') return void callback(null);
   if (!files.length) return void callback(null);
   var fileList = files.join(' ');
   console.log(fileList);
