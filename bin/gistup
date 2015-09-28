@@ -86,7 +86,7 @@ queue()
                 .defer(gitWin)
                 .defer(gitRemoteDoesNotExist)
                 .defer(gitListUntrackedFiles)
-                .await(function(error, _, _, files) {
+                .await(function(error, _, _, _, files) {
                   unless(error)
                       .defer(confirmFiles, files)
                       .defer(gitAdd, files)
