@@ -83,7 +83,7 @@ queue()
         if (argv.repo) {
             queue(1)
                 .defer(gitInit)
-                .defer(gitWin)
+                .defer(gitConfig, settings.gitConfigs)
                 .defer(gitRemoteDoesNotExist)
                 .defer(gitListUntrackedFiles)
                 .await(function(error, _, _, _, files) {
@@ -123,14 +123,15 @@ function gitInit(callback) {
   });
 }
 
-function gitWin(callback) {
-  if(process.platform === "win32"){
-    child.exec("git config core.autocrlf false", function(error, stdout, stderr) {
-      if (!error && stderr) process.stderr.write(stderr), error = new Error("git config core.autocrlf false failed.");
+function gitConfig(gitConfigs, callback) {
+  gitConfigs.forEach(function(config){
+    console.log(config)
+    child.exec("git config " + config, function(error, stdout, stderr) {
+      if (!error && stderr) process.stderr.write(stderr), error = new Error("git config " + config + " failed.");
       if (!error && stdout) process.stdout.write(stdout);
       callback(error);
     });
-  }
+  });
   callback();
 }
 
@@ -144,7 +145,8 @@ function gitRemoteDoesNotExist(callback) {
 
 function gitListUntrackedFiles(callback) {
   if (argv._.length) return void callback(null, argv._);
-  child.exec("git ls-files --others --exclude-standard --directory" + argv.exclude.map(function(x) { return " -x " + quote.single(x); }) + " -x '*/'", function(error, stdout, stderr) {
+    files = argv.exclude.map(function(x) { return ' -x ' + crossPlatform.double(x); })
+    child.exec('git ls-files --others --exclude-standard --directory' + crossPlatform.envVal('files') + ' -x "*/"',{ env: crossPlatform.newEnvVal('files', files)}, function(error, stdout, stderr) {
     if (!error && stderr) process.stderr.write(stderr), error = new Error("git ls-files failed.");
     callback(error, error ? null : stdout.split(os.EOL).filter(Boolean));
   });
@@ -180,10 +182,13 @@ function confirmFiles(files, callback) {
 function gitAdd(files, callback) {
   if (typeof files[0] == 'function') return void callback(null);
   if (!files.length) return void callback(null);
-  var fileList = files.join(' ');
-  console.log(fileList);
-  child.exec("git add " + crossPlatform.envVal('msg'), { env: crossPlatform.newEnvVal('msg', fileList)}, function(error, stdout, stderr) {
-    if (!error && stderr) process.stderr.write(stderr), error = new Error("git add failed.");
+  var fileList = files.map(crossPlatform.double).join(" ");
+  child.exec("git add " + crossPlatform.envVal('files'), { env: crossPlatform.newEnvVal('files', fileList)}, function(error, stdout, stderr) {
+      if (!error && stderr) process.stderr.write(stderr);
+      if (!error)
+      if (stderr.match(/^((warning: (LF|CRLF))(.*((\S\s)((The file).*(\S\s)).*)*(working directory\S\s)))$/g) === null){
+        if (stderr) error = new Error("git add failed.");
+      }
     if (!error && stdout) process.stdout.write(stdout);
     callback(error);
   });
@@ -191,7 +196,12 @@ function gitAdd(files, callback) {
 
 function gitCommit(callback) {
   child.exec('git commit --allow-empty -m "' + crossPlatform.envVal('msg') + '"', { env: crossPlatform.newEnvVal('msg', 'Initial gistup commit')}, function(error, stdout, stderr) {
-    if (!error && stderr) process.stderr.write(stderr), error = new Error("git commit failed.");
+    if (!error && stderr) process.stderr.write(stderr);
+    if(stderr.match(/^((warning: (LF|CRLF))(.*((\S\s)((The file).*(\S\s)).*)*(working directory\S\s)))$/g) === null){
+      error = new Error("git commit failed.");
+    } else {
+      console.log(stderr);
+    }
     if (!error && stdout) process.stdout.write(stdout);
     callback(error);
   });
@@ -258,8 +268,8 @@ function gitPush(callback) {
 
 function openBrowser(open, id, callback) {
   if (!open) return void callback(null);
-  child.exec(open + " " + quote.single(argv.open) + id, function(error, stdout, stderr) {
+  child.exec(open + " " + argv.open + id, function(error, stdout, stderr) {
     if (!error && stderr) process.stderr.write(stderr); // ignore errors
-    callback(null);
+    process.exit(1);
   });
 }

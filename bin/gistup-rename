@@ -12,6 +12,8 @@ var quote = require("../lib/gistup/quote"),
     api = require("../lib/gistup/api"),
     UserError = require("../lib/gistup/user-error");
 
+var crossPlatform = require("../lib/gistup/cross-platform");
+
 var argv = optimist.usage("Usage: \033[1mgistup-rename\033[0m description" + os.EOL + os.EOL
 
 + "Version: " + require("../package.json").version + os.EOL + os.EOL
@@ -46,7 +48,7 @@ queue(1)
     });
 
 function getGistId(callback) {
-  child.exec("git config --get remote." + quote.single(argv.remote) + ".url", function(error, stdout, stderr) {
+  child.exec('git config --get remote.' + crossPlatform.envVal('remoteName') + '.url',{ env: crossPlatform.newEnvVal('remoteName', argv.remote)}, function(error, stdout, stderr) {
     if (!error && stderr) process.stderr.write(stderr), error = new Error("git config failed.");
     if (error) return void callback(error);
     var match = /^git@gist\.github\.com:([0-9a-f]+)\.git$/.exec(stdout = stdout.trim());

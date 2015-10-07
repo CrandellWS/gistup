@@ -31,7 +31,22 @@ gistup index.html
 If you specify any options, such as a private gist, you must separate files from options with a double-dash (--) like this:
 
 ```bash
-gistup --private -- index.html
+gistup --private -- index.html index2.html
+```
+
+Or specify the files prior to any options such as
+
+```bash
+gistup index.html index2.html --private
+```
+
+Additionally, wildcards are accepted to get all files in a directory:
+```bash
+gistup *
+```
+
+```bash
+gistup -- *
 ```
 
 If you want to update your gist later, just use git:
@@ -59,6 +74,32 @@ Arguments:
 
 Gistup comes bundled with two helper programs: `gistup-rename` and `gistup-open`. Use `gistup-rename "description of gist"` to update the description of the gist in the current directory and `gistup-open` to open it for viewing in your default browser.
 
+## Git config
+
+Gistup will allow you to apply Git configuration options to your Gist as desired. Configuration option will be applied when provided as exampled in the .gistup.json file located in your home directory after your first run it should be auto generated after you provide the *personal access token*.
+
+```json
+{
+  "token": "X1x0X1x0X1x0X1x0X1x0X1x0X1x0X1x0X1x0X1x0",
+  "open": "xdg-open",
+  "gitConfigs": []
+}
+```
+
+### Example Configuration
+For example this would apply `color.ui false` and `core.autocrlf false` to your Gists.
+```json
+{
+  "token": "X1x0X1x0X1x0X1x0X1x0X1x0X1x0X1x0X1x0X1x0",
+  "open": "open",
+  "gitConfigs": [
+    "color.ui false",
+    "core.autocrlf false"
+  ]
+}
+```
+The `open` setting should be set to `xdg-open`, `open`,  or `start` depending on your OS (Linux), (Mac | Linux), (Win) respectively.  
+
 ## Troubleshooting
 
 If you see the following error:
@@ -76,7 +117,7 @@ If you’re unable to follow the first-time setup to create a personal access to
 
 ```json
 {
-  "token": "0123456789012345678901234567890123456789"
+  "token": "X1x0X1x0X1x0X1x0X1x0X1x0X1x0X1x0X1x0X1x0"
 }
 ```
 
