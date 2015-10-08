@@ -7,7 +7,7 @@ Simply goto the directory you want to upload as a Gist and type `gistup *` and y
 
 Then you can view the results as a [Block like this](http://bl.ocks.org/mbostock) :+1:, For more information, read the tutorial: [Let’s Make a Block](http://bost.ocks.org/mike/block/) and see what you can make.
 
-This update of https://github.com/mbostock/gistup includes an several enhancements include ablity to create Gists using Windows cmd.exe, Powershell, MingW, Msys2 and many other BASH based terminals inlcuding to Linux and Mac terminals. 
+This update of https://github.com/mbostock/gistup includes several enhancements include ablity to create Gists using Windows cmd.exe, Powershell, MingW, Msys2 and many other BASH based terminals inlcuding to Linux and Mac terminals. 
 
 
 ## Installation
