@@ -1,10 +1,14 @@
 # Gistup
+## The Cross-platform Commandline Gist Uploader
 
-Create a gist from the command line! Then just use git to update it.
+Create and upload a Gist from the command line on Windows, Mac, and Linux! Then just use git as normal to update it.
 
-For more, read the tutorial: [Let’s Make a Block](http://bost.ocks.org/mike/block/).
+Simply goto the directory you want to upload as a Gist and type `gistup *` and your done. Just want to create an empty Gist with repository access goto to your empty directory and enter the command `gistup`. Prefer to only use a single file in a directory, say index.html just type `gistup index.html`
 
-This is a fork of the [original repository](https://github.com/mbostock/gistup) that includes an option to *not* create a repository in the current directory.
+Then you can view the results as a [Block like this](http://bl.ocks.org/mbostock) :+1:, For more information, read the tutorial: [Let’s Make a Block](http://bost.ocks.org/mike/block/) and see what you can make.
+
+This update of https://github.com/mbostock/gistup includes an several enhancements include ablity to create Gists using Windows cmd.exe, Powershell, MingW, Msys2 and many other BASH based terminals inlcuding to Linux and Mac terminals. 
+
 
 ## Installation
 
