@@ -72,7 +72,7 @@ Arguments:
 * --open [url] - specify the URL to open after creating the gist
 * --no-open - don’t open the created gist in your web browser when done
 * --remote - specify the name of the git remote
-* --repo - specify that a repo should be created in the current directory
+* --norepo - specify that no repo should be created in the current directory
 * --help - show some help
 * --version - print the current version of gistup
 
