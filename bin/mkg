@@ -184,11 +184,12 @@ function gitAdd(files, callback) {
   if (!files.length) return void callback(null);
   var fileList = files.map(crossPlatform.double).join(" ");
   child.exec("git add " + crossPlatform.envVal('files'), { env: crossPlatform.newEnvVal('files', fileList)}, function(error, stdout, stderr) {
-      if (!error && stderr) process.stderr.write(stderr);
-      if (!error)
+    if (!error && stderr) {
+      process.stderr.write(stderr)
       if (stderr.match(/^((warning: (LF|CRLF))(.*((\S\s)((The file).*(\S\s)).*)*(working directory\S\s)))$/g) === null){
         if (stderr) error = new Error("git add failed.");
       }
+    }
     if (!error && stdout) process.stdout.write(stdout);
     callback(error);
   });
@@ -196,11 +197,13 @@ function gitAdd(files, callback) {
 
 function gitCommit(callback) {
   child.exec('git commit --allow-empty -m "' + crossPlatform.envVal('msg') + '"', { env: crossPlatform.newEnvVal('msg', 'Initial gistup commit')}, function(error, stdout, stderr) {
-    if (!error && stderr) process.stderr.write(stderr);
-    if(stderr.match(/^((warning: (LF|CRLF))(.*((\S\s)((The file).*(\S\s)).*)*(working directory\S\s)))$/g) === null){
-      error = new Error("git commit failed.");
-    } else {
-      console.log(stderr);
+    if (!error && stderr) {
+      process.stderr.write(stderr);
+      if(stderr.match(/^((warning: (LF|CRLF))(.*((\S\s)((The file).*(\S\s)).*)*(working directory\S\s)))$/g) === null){
+        error = new Error("git commit failed.");
+      } else {
+        console.log(stderr);
+      }
     }
     if (!error && stdout) process.stdout.write(stdout);
     callback(error);
