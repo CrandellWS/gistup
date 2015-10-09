@@ -1,7 +1,7 @@
 {
   "name": "gistup",
-  "version": "0.2.1",
-  "description": "Initialize a gist from the command-line, optionally creating a repo",
+  "version": "0.2.0",
+  "description": "Make a gist from the command-line.",
   "keywords": [
     "gist",
     "github",
@@ -25,16 +25,16 @@
   ],
   "repository": {
     "type": "git",
-    "url": "https://github.com/CrandellWS/gistup.git"
+    "url": "https://github.com/mbostock/gistup.git"
   },
   "dependencies": {
     "optimist": "0.3",
     "queue-async": "1"
   },
   "bin": {
-    "gistup": "./bin/gistup",
-    "gistup-open": "./bin/gistup-open",
-    "gistup-rename": "./bin/gistup-rename"
+    "mkg": "./bin/gistup",
+    "mkgo": "./bin/gistup-open",
+    "mkgn": "./bin/gistup-rename"
   },
   "licenses": [
     {

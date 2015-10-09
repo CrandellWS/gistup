@@ -63,3 +63,4 @@ function getGistId(callback) {
 function openBrowser(open, id, callback) {
   child.exec(open + " " + argv.open + id, callback);
 }
+

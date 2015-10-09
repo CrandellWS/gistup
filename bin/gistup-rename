@@ -65,3 +65,4 @@ function renameGist(token, id, callback) {
     callback(error);
   });
 }
+
