@@ -1,6 +1,6 @@
 {
-  "name": "gistup",
-  "version": "0.2.0",
+  "name": "mkg",
+  "version": "0.0.2",
   "description": "Make a gist from the command-line.",
   "keywords": [
     "gist",
@@ -32,9 +32,9 @@
     "queue-async": "1"
   },
   "bin": {
-    "mkg": "./bin/gistup",
-    "mkgo": "./bin/gistup-open",
-    "mkgn": "./bin/gistup-rename"
+    "mkg": "./bin/mkg",
+    "mkgo": "./bin/mkgo",
+    "mkgn": "./bin/mkgn"
   },
   "licenses": [
     {
