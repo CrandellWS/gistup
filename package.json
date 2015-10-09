@@ -34,7 +34,7 @@
   "bin": {
     "mkg": "./bin/mkg",
     "mkgo": "./bin/mkgo",
-    "mkgn": "./bin/mkgn"
+    "mkgr": "./bin/mkgr"
   },
   "licenses": [
     {
