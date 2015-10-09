@@ -1,6 +1,6 @@
 {
-  "name": "mkg",
-  "version": "0.0.3",
+  "name": "gistup",
+  "version": "0.2.0",
   "description": "Make a gist from the command-line.",
   "keywords": [
     "gist",
@@ -25,16 +25,16 @@
   ],
   "repository": {
     "type": "git",
-    "url": "https://github.com/CrandellWS/gistup.git"
+    "url": "https://github.com/mbostock/gistup.git"
   },
   "dependencies": {
     "optimist": "0.3",
     "queue-async": "1"
   },
   "bin": {
-    "mkg": "./bin/mkg",
-    "mkgo": "./bin/mkgo",
-    "mkgn": "./bin/mkgn"
+    "mkg": "./bin/gistup",
+    "mkgo": "./bin/gistup-open",
+    "mkgn": "./bin/gistup-rename"
   },
   "licenses": [
     {
