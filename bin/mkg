@@ -50,8 +50,8 @@ var argv = optimist.usage("Usage: \033[1mgistup\033[0m [options] -- [file …]" 
       default: "https://gist.github.com/",
       describe: "URL to open in your web browser after creating gist"
     })
-    .options("repo", {
-      default: true,
+    .options("norepo", {
+      default: false,
       describe: "Create a repo in the current directory"
     })
     .options("remote", {
@@ -80,7 +80,7 @@ queue()
     .await(function (error, settings) {
         unless(error);
 
-        if (argv.repo) {
+        if (!argv.norepo) {
             queue(1)
                 .defer(gitInit)
                 .defer(gitConfig, settings.gitConfigs)
@@ -91,23 +91,19 @@ queue()
                       .defer(confirmFiles, files)
                       .defer(gitAdd, files)
                       .defer(gitCommit)
-                      .defer(createGist, settings.token, {".gistup": {"content": "gistup"}})
+                      .defer(createGistFromFileList, settings.token, files)
                       .await(function(error, _, _, _, id) {
                         unless(error)
                             .defer(gitRemoteAdd, id)
-                            .defer(gitPush)
+                           // .defer(gitPush)
                             .defer(openBrowser, argv.open && settings.open, id)
                             .await(unless);
                       });
                 });
-        }
-        else if (!argv._.length) {
-          unless(new UserError("File list must be provided if a repo is not created"));
-        }
-        else {
+        } else {
           queue(1)
               .defer(createGistFromFileList, settings.token, argv._)
-              .await(function(error, _, id) {
+              .await(function(error,id) {
                 unless(error)
                     .defer(openBrowser, argv.open && settings.open, id)
                     .await(unless);
@@ -132,7 +128,7 @@ function gitConfig(gitConfigs, callback) {
       callback(error);
     });
   });
-  callback();
+  callback(null);
 }
 
 function gitRemoteDoesNotExist(callback) {
@@ -238,25 +234,30 @@ function createGist(token, fileContents, callback) {
   });
 }
 
+
 function createGistFromFileList(token, files, callback) {
+  if (!files.length) {
+    unless(new UserError("File list must be provided since current directory has no files "));
+  }
   var fileContents = {},
       fileRead = queue();
 
   files.forEach(function (filename) {
-    fileRead.defer(function (cb) {
+    fileRead.defer(function (callback) {
       fs.readFile(filename, {encoding: "utf8"}, function (error, content) {
         if (error) {
-          return cb(error);
+          return callback(error);
         }
+        filename = filename.replace(/^.*[\\\/]/, '')
         fileContents[filename] = {content: content};
-        cb();
+        callback(null);
       });
     });
   });
 
   fileRead.await(function (error) {
     unless(error)
-        .defer(createGist, token, fileContents)
+        .defer(createGist, token, fileContents, callback)
         .await(unless);
   });
 }
@@ -269,13 +270,13 @@ function gitRemoteAdd(id, callback) {
   });
 }
 
-function gitPush(callback) {
-  child.exec("git push -fu " + crossPlatform.envVal('remoteName') + " master", { env: crossPlatform.newEnvVal('remoteName', argv.remote)}, function(error, stdout, stderr) {
-    if (!error && stderr) process.stderr.write(stderr); // ignore warnings
-    if (!error && stdout) process.stdout.write(stdout);
-    callback(error);
-  });
-}
+//function gitPush(callback) {
+//  child.exec("git push -fu " + crossPlatform.envVal('remoteName') + " master", { env: crossPlatform.newEnvVal('remoteName', argv.remote)}, function(error, stdout, stderr) {
+//    if (!error && stderr) process.stderr.write(stderr); // ignore warnings
+//    if (!error && stdout) process.stdout.write(stdout);
+//    callback(error);
+//  });
+//}
 
 function openBrowser(open, id, callback) {
   if (!open) return void callback(null);
