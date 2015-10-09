@@ -234,14 +234,41 @@ function createGist(token, fileContents, callback) {
   });
 }
 
+function winFiles(files){
+    console.log("files")
+    console.log(files)
+    console.log(files.length)
+    if(files.length === 1){
+        files = files[0].split('\n');
+        for (i in files);
+          if(files[i] === "")
+            delete files[i];
+    }
+
+    if(!Boolean(files.length) || files[0] === '*'){
+      files = [];
+      listing = fs.readdirSync('./');
+      l = listing.length;
+      for(i=0; i<l; i++){
+        file = listing[i];
+        stats = fs.statSync(file);
+        if(stats.isFile()){
+            files.push(file);
+        }
+      }
+    }
+    return files;
+}
 
 function createGistFromFileList(token, files, callback) {
+  if(process.platform === 'win32'){
+    files = winFiles(files);
+  }
   if (!files.length) {
     unless(new UserError("File list must be provided since current directory has no files "));
   }
   var fileContents = {},
       fileRead = queue();
-
   files.forEach(function (filename) {
     fileRead.defer(function (callback) {
       fs.readFile(filename, {encoding: "utf8"}, function (error, content) {
@@ -254,7 +281,6 @@ function createGistFromFileList(token, files, callback) {
       });
     });
   });
-
   fileRead.await(function (error) {
     unless(error)
         .defer(createGist, token, fileContents, callback)
@@ -277,4 +303,3 @@ function openBrowser(open, id, callback) {
     process.exit(1);
   });
 }
-
