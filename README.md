@@ -1,9 +1,9 @@
-# Gistup
+# Make A Gist `mkg`
 ## The Cross-platform Commandline Gist Uploader
 
 Create and upload a Gist from the command line on Windows, Mac, and Linux! Then just use git as normal to update it.
 
-Simply goto the directory you want to upload as a Gist and type `gistup *` and your done. Just want to create an empty Gist with repository access goto to your empty directory and enter the command `gistup`. Prefer to only use a single file in a directory, say index.html just type `gistup index.html`
+Simply goto the directory you want to upload as a Gist and type `mkg *` and your done. Just want to create an empty Gist with repository access goto to your empty directory and enter the command `mkg`. Prefer to only use a single file in a directory, say index.html just type `mkg index.html`
 
 Then you can view the results as a [Block like this](http://bl.ocks.org/mbostock) :+1:, For more information, read the tutorial: [Let’s Make a Block](http://bost.ocks.org/mike/block/) and see what you can make.
 
@@ -13,7 +13,7 @@ This update of https://github.com/mbostock/gistup includes several enhancements 
 ## Installation
 
 ```bash
-npm install -g gistup
+npm install -g mkg
 ```
 
 The first time you run gistup, you’ll be prompted to create a GitHub *personal access token*. You can revoke the token in the future from your GitHub [application settings](https://github.com/settings/applications).
@@ -23,34 +23,34 @@ The first time you run gistup, you’ll be prompted to create a GitHub *personal
 To upload all files in the current directory to your new gist:
 
 ```bash
-gistup
+mkg
 ```
 
 If you just want to create a gist from a single file, try this instead:
 
 ```bash
-gistup index.html
+mkg index.html
 ```
 
 If you specify any options, such as a private gist, you must separate files from options with a double-dash (--) like this:
 
 ```bash
-gistup --private -- index.html index2.html
+mkg --private -- index.html index2.html
 ```
 
 Or specify the files prior to any options such as
 
 ```bash
-gistup index.html index2.html --private
+mkg index.html index2.html --private
 ```
 
 Additionally, wildcards are accepted to get all files in a directory:
 ```bash
-gistup *
+mkg *
 ```
 
 ```bash
-gistup -- *
+mkg -- *
 ```
 
 If you want to update your gist later, just use git:
@@ -61,7 +61,7 @@ git commit -m 'Made some awesome changes.'
 git push
 ```
 
-Gistup works with binary files, too!
+Mkg works with binary files, too!
 
 Arguments:
 
@@ -72,15 +72,15 @@ Arguments:
 * --open [url] - specify the URL to open after creating the gist
 * --no-open - don’t open the created gist in your web browser when done
 * --remote - specify the name of the git remote
-* --repo - specify that a repo should be created in the current directory
+* --norepo - specify that no repo should be created in the current directory
 * --help - show some help
 * --version - print the current version of gistup
 
-Gistup comes bundled with two helper programs: `gistup-rename` and `gistup-open`. Use `gistup-rename "description of gist"` to update the description of the gist in the current directory and `gistup-open` to open it for viewing in your default browser.
+Mkg comes bundled with two helper programs: `mkgn` and `mkgo`. Use `mkgn "description of gist"` to update the description of the gist in the current directory and `mkgo` to open it for viewing in your default browser.
 
 ## Git config
 
-Gistup will allow you to apply Git configuration options to your Gist as desired. Configuration option will be applied when provided as exampled in the .gistup.json file located in your home directory after your first run it should be auto generated after you provide the *personal access token*.
+Mkg will allow you to apply Git configuration options to your Gist as desired. Configuration option will be applied when provided as exampled in the .gistup.json file located in your home directory after your first run it should be auto generated after you provide the *personal access token*.
 
 ```json
 {
@@ -125,4 +125,4 @@ If you’re unable to follow the first-time setup to create a personal access to
 }
 ```
 
-Replace the numbers 0123456789… with your access token and save.
+Replace the numbers X1x0X1x0X1x… with your access token and save.
