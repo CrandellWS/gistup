@@ -270,14 +270,6 @@ function gitRemoteAdd(id, callback) {
   });
 }
 
-//function gitPush(callback) {
-//  child.exec("git push -fu " + crossPlatform.envVal('remoteName') + " master", { env: crossPlatform.newEnvVal('remoteName', argv.remote)}, function(error, stdout, stderr) {
-//    if (!error && stderr) process.stderr.write(stderr); // ignore warnings
-//    if (!error && stdout) process.stdout.write(stdout);
-//    callback(error);
-//  });
-//}
-
 function openBrowser(open, id, callback) {
   if (!open) return void callback(null);
   child.exec(open + " " + argv.open + id, function(error, stdout, stderr) {
