@@ -80,7 +80,7 @@ queue(1)
           .defer(createGist, settings.token)
           .await(function(error, _, _, _, id) {
             unless(error)
-                .defer(gitRemoteAdd, id)
+                .defer(gitRemoteAdd, id, settings)
                 .defer(gitPush)
                 .defer(openBrowser, argv.open && settings.open, id)
                 .await(unless);
@@ -175,8 +175,11 @@ function createGist(token, callback) {
   });
 }
 
-function gitRemoteAdd(id, callback) {
-  child.exec("git remote add --track master " + quote.single(argv.remote) + " git@gist.github.com:" + id + ".git", function(error, stdout, stderr) {
+function gitRemoteAdd(id, settings, callback) {
+  url = "git@gist.github.com:" + id + ".git"; // default
+  if (/^https$/i.test(settings.protocol)) url = "https://" + settings.user + ":" + settings.token + "@gist.github.com/" + id + ".git";
+  
+  child.exec("git remote add --track master " + quote.single(argv.remote) + " " + url, function(error, stdout, stderr) {
     if (!error && stderr) process.stderr.write(stderr), error = new Error("git remote failed.");
     if (!error && stdout) process.stdout.write(stdout);
     callback(error);
