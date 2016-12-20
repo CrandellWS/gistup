@@ -32,9 +32,9 @@
     "queue-async": "1"
   },
   "bin": {
-    "mkg": "./bin/gistup",
-    "mkgo": "./bin/gistup-open",
-    "mkgn": "./bin/gistup-rename"
+    "gistup": "./bin/gistup",
+    "gistup-open": "./bin/gistup-open",
+    "gistup-rename": "./bin/gistup-rename"
   },
   "licenses": [
     {
